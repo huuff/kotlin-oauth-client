@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "xyz.haff"
-version = "0.1.1"
+version = "0.2.0"
 
 tasks.wrapper {
     gradleVersion = "7.4"
@@ -19,16 +19,21 @@ repositories {
     mavenCentral()
 }
 
-val ktor_version: String by project
+val ktorVersion: String by project
+val kotestVersion: String by project
+val mockkVersion: String by project
 dependencies {
-    implementation("io.ktor:ktor-client-core:$ktor_version")
-    implementation("io.ktor:ktor-client-cio:$ktor_version")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
 
+    implementation("org.json:json:20220924")
     implementation("com.auth0:java-jwt:4.2.2")
 
     testImplementation(kotlin("test"))
+    testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
+    testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
+    testImplementation("io.kotest:kotest-assertions-json:$kotestVersion")
+    testImplementation("io.mockk:mockk:$mockkVersion")
+    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
 }
 
 tasks.test {

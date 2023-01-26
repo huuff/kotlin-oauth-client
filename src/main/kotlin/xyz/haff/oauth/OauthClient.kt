@@ -3,15 +3,11 @@ package xyz.haff.oauth
 import com.auth0.jwt.JWT
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import org.json.JSONObject
 import java.time.Clock
 import java.time.Instant
 
@@ -19,33 +15,22 @@ data class CachedToken(
     val token: String,
     val expiresAt: Instant,
 ) {
-    fun isNotExpired(clock: Clock) = this.expiresAt.isBefore(Instant.now(clock))
+    fun isNotExpired(clock: Clock) = this.expiresAt.isAfter(Instant.now(clock))
 }
 
-@Serializable
-data class TokenResponse(
-    val access_token: String,
-)
-
-// TODO: Test expiration
 class OauthClient(
     private val tokenEndpoint: String,
     private val clientId: String,
     private val clientSecret: String,
     private val scopes: List<String>,
+    private val httpClient: HttpClient,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) {
-    private val httpClient = HttpClient(CIO) {
-        install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-            })
-        }
-    }
     private val mutex = Mutex()
 
     private var cachedToken: CachedToken? = null
 
+    // TODO: Appropriately handle errors
     suspend fun getToken(): String {
         mutex.withLock {
             if (cachedToken?.isNotExpired(clock) == true) {
@@ -60,12 +45,13 @@ class OauthClient(
                         append("scopes", scopes.joinToString(separator = " "))
                     }
                 )
-                val json: TokenResponse = response.body()
+                val json = JSONObject(response.body<String>())
+                val accessToken = json["access_token"] as String
                 this.cachedToken = CachedToken(
-                    token = json.access_token,
-                    expiresAt = JWT.decode(json.access_token).expiresAtAsInstant,
+                    token = accessToken,
+                    expiresAt = JWT.decode(accessToken).expiresAtAsInstant,
                 )
-                return json.access_token
+                return accessToken
             }
         }
     }
