@@ -5,25 +5,21 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
-import io.ktor.http.ContentType.Application.Json
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.Clock
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.time.Instant
 
 data class CachedToken(
     val token: String,
-    val expiresAt: LocalDateTime,
+    val expiresAt: Instant,
 ) {
-    fun isNotExpired(clock: Clock) = this.expiresAt.isBefore(LocalDateTime.now(clock))
+    fun isNotExpired(clock: Clock) = this.expiresAt.isBefore(Instant.now(clock))
 }
 
 @Serializable
@@ -31,6 +27,7 @@ data class TokenResponse(
     val access_token: String,
 )
 
+// TODO: Test expiration
 class OauthClient(
     private val tokenEndpoint: String,
     private val clientId: String,
@@ -66,7 +63,7 @@ class OauthClient(
                 val json: TokenResponse = response.body()
                 this.cachedToken = CachedToken(
                     token = json.access_token,
-                    expiresAt = LocalDateTime.ofInstant(JWT.decode(json.access_token).expiresAtAsInstant, ZoneOffset.UTC),
+                    expiresAt = JWT.decode(json.access_token).expiresAtAsInstant,
                 )
                 return json.access_token
             }
