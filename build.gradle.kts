@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "xyz.haff"
-version = "0.2.0"
+version = "0.3.0"
 
 tasks.wrapper {
     gradleVersion = "7.4"

@@ -10,7 +10,7 @@ import io.ktor.http.*
 import io.ktor.utils.io.*
 import java.time.Instant
 
-class OauthClientTest : FunSpec({
+class KtorOauthClientTest : FunSpec({
 
     test("renews expired token") {
         // ARRANGE
@@ -31,7 +31,7 @@ class OauthClientTest : FunSpec({
 
         }
         val mockHttpClient = HttpClient(mockHttpEngine)
-        val oauthClient = OauthClient(
+        val ktorOauthClient = KtorOauthClient(
             tokenEndpoint = "test",
             clientId = "test",
             clientSecret = "test",
@@ -40,8 +40,8 @@ class OauthClientTest : FunSpec({
         )
 
         // ACT
-        val firstToken = oauthClient.getToken()
-        val secondToken = oauthClient.getToken()
+        val firstToken = ktorOauthClient.getToken()
+        val secondToken = ktorOauthClient.getToken()
 
         // ASSERT
         mockHttpEngine.requestHistory.size shouldBe 2
