@@ -22,7 +22,9 @@ import java.time.ZoneOffset
 data class CachedToken(
     val token: String,
     val expiresAt: LocalDateTime,
-)
+) {
+    fun isNotExpired(clock: Clock) = this.expiresAt.isBefore(LocalDateTime.now(clock))
+}
 
 @Serializable
 data class TokenResponse(
@@ -49,7 +51,7 @@ class OauthClient(
 
     suspend fun getToken(): String {
         mutex.withLock {
-            if (cachedToken?.expiresAt?.isBefore(LocalDateTime.now(clock)) == true) {
+            if (cachedToken?.isNotExpired(clock) == true) {
                 return cachedToken!!.token
             } else {
                 val response = httpClient.submitForm(
